@@ -1,0 +1,51 @@
+-- ============================================================
+-- 6. gwz_sales_17_ds_rk — FULL PIPELINE
+-- From raw sales data to daily new customer acquisition report
+-- ============================================================
+
+-- Pipeline:
+-- raw sales data (gwz_sales_17)
+--   ↓ DENSE_RANK() assigns order sequence per customer
+--   ↓ CASE WHEN ds_rk = 1 → is_new = 1
+-- gwz_sales_17_ds_rk (analytical table)
+--   ↓ WHERE is_new = 1, GROUP BY date_date
+-- daily new customer report
+
+-- Step 1: Build and save the analytical table
+CREATE OR REPLACE TABLE course17.gwz_sales_17_ds_rk AS
+WITH sales_with_ds_rk AS (
+  SELECT
+    *,
+    DENSE_RANK() OVER(
+      PARTITION BY customers_id
+      ORDER BY date_date, orders_id
+    ) AS ds_rk
+  FROM course17.gwz_sales_17
+)
+SELECT
+  *,
+  CASE
+    WHEN ds_rk = 1 THEN 1 ELSE 0
+  END AS is_new
+FROM sales_with_ds_rk;
+
+-- Step 2: Verify output
+SELECT
+  orders_id,
+  customers_id,
+  date_date,
+  is_new
+FROM course17.gwz_sales_17_ds_rk
+LIMIT 10;
+
+-- Step 3: Daily new customer count
+-- How many new customers placed their first order each day?
+SELECT
+  date_date,
+  COUNT(*) AS new_customers
+FROM course17.gwz_sales_17_ds_rk
+WHERE is_new = 1
+GROUP BY date_date;
+-- 153 rows — one per active day
+-- This query is simple but the pipeline behind it makes it possible
+-- Window function → is_new flag → clean daily acquisition report

@@ -1,0 +1,30 @@
+-- ============================================================
+-- 4. APPLYING WINDOW FUNCTIONS TO gwz_sales_17
+-- Sales table has multiple product lines per order
+-- ORDER BY date_date, orders_id ensures stable ranking
+-- ============================================================
+
+-- ROW_NUMBER on sales table
+-- ORDER BY date_date, orders_id prevents instability
+-- when a customer has multiple items in the same order
+SELECT *,
+  ROW_NUMBER() OVER(
+    PARTITION BY customers_id
+    ORDER BY date_date, orders_id
+  ) AS rn
+FROM course17.gwz_sales_17;
+
+-- ROW_NUMBER vs RANK on sales table
+SELECT *,
+  ROW_NUMBER() OVER(
+    PARTITION BY customers_id
+    ORDER BY date_date, orders_id
+  ) AS rn,
+  RANK() OVER(
+    PARTITION BY customers_id
+    ORDER BY date_date, orders_id
+  ) AS rk
+FROM `course17.gwz_sales_17`;
+-- Multiple product lines in the same order share the same orders_id
+-- RANK gives them the same rank number
+-- ROW_NUMBER gives each line a unique number

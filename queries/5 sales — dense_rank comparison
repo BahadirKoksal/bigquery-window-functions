@@ -1,0 +1,51 @@
+-- ============================================================
+-- 5. ROW_NUMBER() vs RANK() vs DENSE_RANK()
+-- Full comparison of all three ranking functions
+-- Key difference: behavior after tied values
+-- ============================================================
+
+-- All three functions side by side
+SELECT *,
+  ROW_NUMBER() OVER(
+    PARTITION BY customers_id
+    ORDER BY date_date, orders_id
+  ) AS rn,
+  RANK() OVER(
+    PARTITION BY customers_id
+    ORDER BY date_date, orders_id
+  ) AS rk,
+  DENSE_RANK() OVER(
+    PARTITION BY customers_id
+    ORDER BY date_date, orders_id
+  ) AS ds_rk
+FROM `course17.gwz_sales_17`;
+
+-- Filter to specific customers to compare clearly
+SELECT
+  customers_id,
+  date_date,
+  orders_id,
+  RANK() OVER(
+    PARTITION BY customers_id
+    ORDER BY date_date, orders_id
+  ) AS rk,
+  DENSE_RANK() OVER(
+    PARTITION BY customers_id
+    ORDER BY date_date, orders_id
+  ) AS ds_rk
+FROM course17.gwz_sales_17
+WHERE customers_id IN (98869, 217071, 268263);
+-- Customer 98869 has 2 product lines in order on 2021-04-21:
+-- RANK:        1, 1, 3 (skips 2 after the tie)
+-- DENSE_RANK:  1, 1, 2 (no gap — counts unique order groups)
+
+-- Why DENSE_RANK for sales table?
+-- Multiple product lines belong to the same order
+-- DENSE_RANK gives the same rank to all lines in the same order
+-- So ds_rk = 1 correctly tags the entire first order
+-- ROW_NUMBER would only tag the first product line as rn = 1
+-- which would miss the other items in that first order
+
+-- For first-purchase detection in data analysis projects:
+-- ROW_NUMBER is standard on order-level tables (one row per order)
+-- DENSE_RANK is correct on sales-level tables (multiple rows per order)

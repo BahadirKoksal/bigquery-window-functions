@@ -1,0 +1,35 @@
+-- ============================================================
+-- 3. gwz_orders_17_rn — FIRST ORDER FLAG
+-- Tag each customer's first order with is_new = 1
+-- All subsequent orders get is_new = 0
+-- ============================================================
+
+-- Build and save the analytical table
+CREATE OR REPLACE TABLE course17.gwz_orders_17_rn AS
+WITH orders_with_rn AS (
+  SELECT
+    *,
+    ROW_NUMBER() OVER(
+      PARTITION BY customers_id
+      ORDER BY date_date
+    ) AS rn
+  FROM course17.gwz_orders_17
+)
+SELECT
+  *,
+  CASE
+    WHEN rn = 1 THEN 1 ELSE 0
+  END AS is_new
+FROM orders_with_rn;
+-- CTE assigns row number per customer ordered by date
+-- Outer query adds is_new: 1 for first order, 0 for all others
+-- Result: every order is labeled as new or returning customer
+
+-- Verify output
+SELECT
+  orders_id,
+  customers_id,
+  date_date,
+  is_new
+FROM course17.gwz_orders_17_rn
+LIMIT 10;

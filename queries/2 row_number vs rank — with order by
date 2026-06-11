@@ -1,0 +1,37 @@
+-- ============================================================
+-- 2. ROW_NUMBER() vs RANK() — WITH ORDER BY
+-- Adding ORDER BY makes ranking chronological
+-- Difference becomes visible when two rows share the same date
+-- ============================================================
+
+-- Both functions with ORDER BY date_date
+SELECT *,
+  ROW_NUMBER() OVER(
+    PARTITION BY customers_id
+    ORDER BY date_date
+  ) AS rn,
+  RANK() OVER(
+    PARTITION BY customers_id
+    ORDER BY date_date
+  ) AS rk
+FROM course17.gwz_orders_17;
+
+-- Filter to specific customers to see the difference clearly
+SELECT
+  customers_id,
+  date_date,
+  orders_id,
+  ROW_NUMBER() OVER(
+    PARTITION BY customers_id
+    ORDER BY date_date
+  ) AS rn,
+  RANK() OVER(
+    PARTITION BY customers_id
+    ORDER BY date_date
+  ) AS rk
+FROM course17.gwz_orders_17
+WHERE customers_id IN (212497, 205343, 33690);
+-- Customer 33690 has two orders on the same date:
+-- ROW_NUMBER: 1, 2 (always unique, sequential)
+-- RANK:       1, 1 (ties get same rank, next rank skips)
+-- Conclusion: for finding the first order, ROW_NUMBER is safer and more predictable

@@ -1,0 +1,30 @@
+-- ============================================================
+-- Window Functions — BigQuery SQL
+-- ============================================================
+
+-- ============================================================
+-- 1. ROW_NUMBER() — BASIC RANKING
+-- Assigns a unique sequential number to each row per partition
+-- Unlike GROUP BY, all rows are preserved
+-- ============================================================
+
+-- Row count
+SELECT COUNT(*)
+FROM `course17.gwz_orders_17`
+LIMIT 10;
+
+-- Preview table
+SELECT *
+FROM `course17.gwz_orders_17`
+LIMIT 10;
+
+-- ROW_NUMBER() without ORDER BY
+-- Numbers each customer's orders in arbitrary order
+SELECT *,
+  ROW_NUMBER() OVER(
+    PARTITION BY customers_id
+  ) AS nr
+FROM course17.gwz_orders_17;
+-- PARTITION BY customers_id: restart numbering for each customer
+-- Result: each customer's rows get numbered 1, 2, 3...
+-- All 142,409 rows are preserved — no grouping, no collapsing
